@@ -1,0 +1,92 @@
+#!/bin/bash
+
+num=$1
+tauntspath="/home/basti/scripts/tauntspack/"
+export defaultpack=`cat /home/basti/scripts/tauntspack/current`
+#echo $defaultpack
+
+#Vérifications
+if [ $# -eq 0 ]
+then
+	echo "No arguments supplied"
+	exit 1
+fi
+
+#Fonctions
+function check_folder {
+	foldersize=$(find $tauntspath$defaultpack -type f | wc -l)
+	if [[ $num -gt $foldersize || $num -eq 0 ]]
+	then
+		echo "Not in range"
+		exit 1
+	fi
+}
+
+function add_zero {
+	# On rajoute un zéro devant l'argument
+	# si celui-ci ne contient qu'un seul chiffre
+	wordvar=$(expr $(echo "$num" | wc -m) - 1) 
+	if [ $wordvar -eq 1 ]
+	then
+		num="0$num"
+	fi
+}
+
+function play_sound {
+	soundpath="$(ls -1 $tauntspath$defaultpack | grep -w "$num")"
+	cvlc --play-and-exit "$tauntspath$defaultpack$soundpath" 2> /dev/null &
+}
+
+function help {
+echo -e "\033[31m████████╗ █████╗ ██╗   ██╗███╗   ██╗████████╗
+╚══██╔══╝██╔══██╗██║   ██║████╗  ██║╚══██╔══╝
+   ██║   ███████║██║   ██║██╔██╗ ██║   ██║   
+   ██║   ██╔══██║██║   ██║██║╚██╗██║   ██║   
+   ██║   ██║  ██║╚██████╔╝██║ ╚████║   ██║   
+   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   
+#TAUNT #EfreiLinux #sKp1\033[0m\n"
+
+echo "Liste des commandes :"
+echo "-h, --help : afficher l'aide"
+echo "-l, --list : afficher les taunts du pack sélectionné"
+echo "-L, --list-library : afficher tous les packs disponibles"
+echo "-p, --pack : afficher le nom du pack sélectionné"
+echo "-s, --select [<pack>] : sélectionner le pack"
+
+echo "A faire :"
+echo "fonction loop -l"
+echo "sécuriser fonction -s"
+}
+
+re='[0-9]+$'
+if [[ $num =~ $re ]]
+then
+	check_folder
+	add_zero
+	play_sound
+fi
+
+case $num in
+	-h|--help)
+	help
+	;;
+	-l|--list)
+	ls $tauntspath$defaultpack
+	;;
+	-L|--list-library)
+	#find $tauntspath -maxdepth 1 -type d
+	ls -l $tauntspath | grep "^d" | awk '{print $9}'
+	;;
+	-p|--pack)
+	echo $defaultpack
+	;;
+	-s|--select)
+	NEWLIB="$2"
+	if [ -z "$2" ]
+	then
+		echo "No library supplied"
+	fi
+	echo $NEWLIB"/" > /home/basti/scripts/tauntspack/current
+	;;
+esac
+
